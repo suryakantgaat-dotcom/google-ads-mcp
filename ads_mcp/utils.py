@@ -42,13 +42,26 @@ logging.basicConfig(level=logging.INFO)
 _ADS_SCOPE = "https://www.googleapis.com/auth/adwords"
 
 def _create_credentials() -> google.auth.credentials.Credentials:
-    """Returns Application Default Credentials with the Google Ads scope, or the FastMCP token if found."""
+    """Returns credentials: FastMCP token > stored refresh token > Application Default Credentials."""
     from fastmcp.server.dependencies import get_access_token
     from google.oauth2.credentials import Credentials
 
     token_obj = get_access_token()
     if token_obj and token_obj.token:
         return Credentials(token=token_obj.token)
+
+    refresh_token = os.environ.get("GOOGLE_ADS_REFRESH_TOKEN")
+    client_id = os.environ.get("GOOGLE_ADS_MCP_OAUTH_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET")
+    if refresh_token and client_id and client_secret:
+        return Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=[_ADS_SCOPE],
+        )
 
     credentials, _ = google.auth.default(scopes=[_ADS_SCOPE])
     return credentials
@@ -99,13 +112,32 @@ def _get_account_configs() -> list:
     return json.loads(raw) if raw else []
 
 def _create_credentials_for_account(account_config: dict) -> google.auth.credentials.Credentials:
-    """Returns credentials for a specific account config."""
+    """Returns credentials for a specific account config.
+
+    Priority: FastMCP token > per-account refresh token > service account JSON > ADC.
+    Account config supports:
+      refresh_token, client_id, client_secret  — OAuth user credentials
+      credentials_json                          — service account JSON string
+    """
     from fastmcp.server.dependencies import get_access_token
     from google.oauth2.credentials import Credentials
 
     token_obj = get_access_token()
     if token_obj and token_obj.token:
         return Credentials(token=token_obj.token)
+
+    refresh_token = account_config.get("refresh_token")
+    client_id = account_config.get("client_id")
+    client_secret = account_config.get("client_secret")
+    if refresh_token and client_id and client_secret:
+        return Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=[_ADS_SCOPE],
+        )
 
     creds_json = account_config.get("credentials_json")
     if creds_json:
