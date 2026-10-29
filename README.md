@@ -18,6 +18,36 @@ to provide several
 - `list_accessible_customers`: Returns ids of customers directly accessible
   by the user authenticating the call.
 
+### Configuring and Namespacing Tools
+
+The Google Ads MCP server uses the `tools_config.yaml` to let you selectively enable or disable individual tools or tool categories (namespaces) and customize their namespace prefixes.
+
+A default `tools_config.yaml` with all tools enabled is bundled with the package, so the server works out of the box with no extra setup. To customize your installation, the server resolves the configuration in the following order:
+
+1. An explicit path set via the `GOOGLE_ADS_MCP_TOOLS_CONFIG` environment variable.
+2. A `tools_config.yaml` file in the current working directory.
+3. The default `tools_config.yaml` bundled with the package.
+
+If an explicitly requested configuration file (via the environment variable) is missing, or any resolved file is invalid, the server raises an error and fails to start.
+
+#### Configuration Example:
+```yaml
+namespaces:
+  # Option 1: Enable category 'customers' with default prefix -> "customers_list_accessible_customers"
+  customers: true
+
+  # Option 2: Enable category 'search' with a custom prefix -> "query_search"
+  search: "query"
+
+  # Option 3: Fine-grained control over tools in a category
+  metadata:
+    enabled: true
+    prefix: "metadata"
+    enabled_tools:
+      - get_resource_metadata: true
+```
+
+
 ### Resources available
 
 - `discovery-document`: Retrieve the Google Ads API discovery document. Provides the discovery document for the latest version of the Google Ads API, which describes the API surface, including resources, methods, and schemas. Host LLMs should access this resource to understand the structure of the Google Ads API and discover available features.
@@ -45,9 +75,16 @@ Setup involves the following steps:
 
 [Install pipx](https://pipx.pypa.io/stable/#install-pipx).
 
-### Configure Developer Token
+After a version has been published to PyPI, you can run that exact version
+instead of following the latest repository state:
 
-Follow the instructions for [Obtaining a Developer Token](https://developers.google.com/google-ads/api/docs/get-started/dev-token).
+```shell
+pipx run --spec "google-ads-mcp==X.Y.Z" google-ads-mcp
+```
+
+### Configure Developer Token (Optional)
+
+If your setup requires a developer token, follow the instructions for [Obtaining a Developer Token](https://developers.google.com/google-ads/api/docs/get-started/dev-token).
 
 Your developer token must have at least [Explorer access](https://developers.google.com/google-ads/api/docs/get-started/dev-token#access-levels) to query production accounts. New tokens may be automatically upgraded to Explorer access; if not, you can apply through the API Center. See the [access levels documentation](https://developers.google.com/google-ads/api/docs/get-started/dev-token#access-levels) for details.
 
@@ -73,12 +110,90 @@ To enable it, set the following environment variables:
 - `GOOGLE_ADS_MCP_OAUTH_CLIENT_ID`: Your Google Cloud OAuth 2.0 Client ID.
 - `GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET`: Your Google Cloud OAuth 2.0 Client Secret.
 - `GOOGLE_ADS_MCP_BASE_URL`: (Optional) The base URL where the server is accessible (defaults to `http://localhost:8080`).
+- `GOOGLE_ADS_MCP_JWT_SIGNING_KEY`: (Optional) Secret key used to sign FastMCP JWT tokens across multiple server instances or deployments.
+- `GOOGLE_ADS_MCP_STORAGE_TYPE`: (Optional) Storage backend for OAuth state (`filetree`, `redis`, `firestore`, or `memory`).
+- `GOOGLE_ADS_MCP_STORAGE_PATH`: (Optional) Directory path for `filetree` persistent storage.
+- `GOOGLE_ADS_MCP_STORAGE_REDIS_URL`: (Optional) Redis URL for `redis` persistent storage.
+- `GOOGLE_ADS_MCP_STORAGE_FIRESTORE_PROJECT`: (Optional) Google Cloud project for `firestore` persistent storage. Defaults to the project inferred from Application Default Credentials. Setting it selects the `firestore` backend even if `GOOGLE_ADS_MCP_STORAGE_TYPE` is unset.
+- `GOOGLE_ADS_MCP_STORAGE_FIRESTORE_DATABASE`: (Optional) Firestore database name for `firestore` persistent storage. Defaults to `(default)`.
+- `GOOGLE_ADS_MCP_STORAGE_ENCRYPTION_KEY`: (Optional) Encryption key for stored OAuth tokens.
+- `GOOGLE_ADS_MCP_STORAGE_DISABLE_ENCRYPTION`: (Optional) Set to `true` to disable token encryption.
 
-Once this is enabled, you can authenticate to the API through your MCP client: for example, in Gemini CLI, the command `/mcp auth google-ads-mcp` triggers the authentication flow.
+The `redis` and `firestore` backends need their storage library installed
+alongside the server: `pip install py-key-value-aio[redis]` and
+`pip install google-ads-mcp[firestore]` respectively.
 
-When these variables are set, the server automatically switches to the `streamable-http` transport (SSE/HTTP) instead of `stdio`.
+Once this is enabled, you can authenticate to the API through your MCP client.
 
-You will need to run the server as a separate process and configure your MCP client to connect to the SSE endpoint (e.g., `http://localhost:8080/mcp`).
+When these variables are set, the server automatically switches to the
+`streamable-http` transport instead of `stdio`.
+
+You will need to run the server as a separate process and configure your MCP
+client to connect to the Streamable HTTP endpoint (for example,
+`http://localhost:8080/mcp`).
+
+### Local WSL and Podman deployment
+
+This deployment has been tested with rootless Podman in WSL and exposes a single
+Streamable HTTP endpoint at `http://localhost:8080/mcp`. Build the image from
+the repository inside WSL:
+
+```shell
+podman build --tag localhost/google-ads-mcp:latest --file Dockerfile .
+```
+
+Keep server credentials out of MCP client configuration. The tested Quadlet
+loads Google Ads and OAuth settings from a private host-side file through
+`EnvironmentFile=` and uses a separate named volume for persistent encrypted
+OAuth state:
+
+```ini
+[Container]
+Image=localhost/google-ads-mcp:latest
+PublishPort=127.0.0.1:8080:8080
+EnvironmentFile=/absolute/host/path/google-ads-mcp.env
+Volume=google-ads-mcp-oauth.volume:/var/lib/google-ads-mcp:rw
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+```
+
+The environment file and the OAuth-state volume serve different purposes: the
+volume does not contain the `.env` file. Keep the environment file outside the
+repository, restrict it to the service owner, and never commit it. Antigravity
+and Codex then need only the MCP endpoint and their own OAuth authorization;
+they do not need the server's Google Ads developer token, OAuth client secret,
+or signing and storage keys. Publish port 8080 only on the loopback interface
+when the server is intended for local agents.
+
+The endpoint deliberately keeps stateful Streamable HTTP enabled. It supports
+legacy MCP 2025 clients that use `Mcp-Session-Id` and GET SSE as well as MCP
+2026 clients that use sessionless POST requests and `subscriptions/listen`.
+Do not enable FastMCP's `stateless_http` option on this shared endpoint; doing
+so removes the legacy GET channel.
+
+The server runs on FastMCP 4 (`fastmcp>=4.0.6,<5`) paired with `mcp[cli]>=2.0.0,<3`. The Docker build also applies a version-guarded
+OAuth metadata workaround for Codex CLI 0.146. It stops advertising the RFC
+9207 authorization-response `iss` parameter as mandatory while FastMCP still
+includes it in redirects. The build fails if the expected FastMCP major version or
+patch location changes, so upgrades require explicit interoperability tests.
+
+For Codex, configure and authenticate the server as described in the
+[official Codex MCP documentation](https://developers.openai.com/codex/mcp/):
+
+```shell
+codex mcp add google_ads --url http://localhost:8080/mcp
+codex mcp login google_ads
+```
+
+For Antigravity, configure the same URL as `serverUrl` in its MCP configuration.
+This key is required for Streamable HTTP in Antigravity 2.8.1 and Antigravity
+IDE 2.5.5; `httpUrl` is not accepted by those versions. After authentication,
+both clients should list these namespaced tools:
+
+- `customers_list_accessible_customers`
+- `metadata_get_resource_metadata`
+- `search_search`
 
 #### Option 2: Configure credentials using Application Default Credentials
 
@@ -139,36 +254,42 @@ In the utils.py file, change get_googleads_client() to use the load_from_storage
 Add the server to your MCP client's configuration. Below are examples for
 popular clients.
 
-#### Gemini CLI / Gemini Code Assist
+#### Antigravity / Antigravity IDE
 
-1.  Install [Gemini
-    CLI](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/index.md)
-    or [Gemini Code
-    Assist](https://marketplace.visualstudio.com/items?itemName=Google.geminicodeassist).
+1.  Install [Antigravity](https://antigravity.google/product/antigravity-cli)
+    or Antigravity IDE.
 
-1.  Create or edit the file at `~/.gemini/settings.json`, adding your server
-    to the `mcpServers` list.
+1.  Configure your server. Refer to the docs at [https://antigravity.google/docs/mcp](https://antigravity.google/docs/mcp) for details on setting up MCP servers.
 
 - Option 1: Using FastMCP OAuth Proxy (Streamable HTTP)
 
-  You can run the server as a separate process and configure your MCP client to connect to the SSE endpoint (e.g., `http://localhost:8080/mcp`).
+  You can run the server as a separate process and configure your MCP client
+  to connect to the Streamable HTTP endpoint (for example,
+  `http://localhost:8080/mcp`).
   This also allows using FastMCP's [OAuth proxy](https://gofastmcp.com/servers/auth/oauth-proxy) feature for dynamic user authentication.
+
+  Antigravity 2.8.1 and Antigravity IDE 2.5.5 require `serverUrl` for a
+  Streamable HTTP server. Do not use the older `httpUrl` key. Server-side
+  credentials belong in the server process, not in this client configuration.
 
     ```json
     {
       "mcpServers": {
         "google-ads-mcp": {
-          "httpUrl":"http://localhost:8080/mcp",
-          "env": {
-            "GOOGLE_PROJECT_ID": "YOUR_PROJECT_ID",
-            "GOOGLE_ADS_DEVELOPER_TOKEN": "YOUR_DEVELOPER_TOKEN"                        
-          }
+          "serverUrl": "http://localhost:8080/mcp"
         }
       }
     }
     ```
 
 - Option 2: the Application Default Credentials method
+
+    This remains a supported alternative, but it provides less credential
+    isolation than the server-managed Streamable HTTP deployment above. The MCP
+    client starts the server and its configuration contains the ADC file path
+    and Google Ads developer token. Prefer the Quadlet deployment when several
+    local clients share the same server or client configuration may be copied,
+    synchronized, or inspected by other tools.
 
     Replace `PATH_TO_CREDENTIALS_JSON` with the path you copied in the previous
     step.
@@ -177,8 +298,6 @@ popular clients.
     `env` object. Replace `YOUR_PROJECT_ID` in the following example with the
     [project ID](https://support.google.com/googleapi/answer/7014113) of your
     Google Cloud project.
-
-
 
     ```json
     {
@@ -225,8 +344,11 @@ popular clients.
 
 #### Login Customer Id
 
-If your access to the customer account is through a manager account, you will
-need to add the customer ID of the manager account to the settings file.
+If your access to the customer account is through a manager account, you can
+either provide the manager account's customer ID per tool call via the optional
+`login_customer_id` parameter, or set `GOOGLE_ADS_LOGIN_CUSTOMER_ID` in the
+settings file as a default (the per-call `login_customer_id` parameter takes
+precedence when specified).
 
 See [here](https://developers.google.com/google-ads/api/docs/concepts/call-structure#cid) for details.
 
@@ -291,11 +413,24 @@ You can use Cloud Build to build and push the image to Artifact Registry without
 Make sure to set the required environment variables:
 
 - `GOOGLE_PROJECT_ID`: Your Google Cloud project ID.
-- `GOOGLE_ADS_DEVELOPER_TOKEN`: The developer token you want the MCP server to use (see above).
+- `GOOGLE_ADS_DEVELOPER_TOKEN`: (Optional) The developer token you want the MCP server to use (see above).
 - `GOOGLE_ADS_MCP_OAUTH_CLIENT_ID`: The OAuth Client ID you want the MCP server to use.
 - `GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET`: The OAuth Client secret you want the MCP server to use.
 - `GOOGLE_ADS_MCP_BASE_URL`: The base URL where your MCP server is accessible: this will be automatically assigned by Google Cloud Run after your first deployment. You can update the environment variables after deployment. 
+- `GOOGLE_ADS_MCP_JWT_SIGNING_KEY`: (Recommended for production) Persistent JWT signing key across Cloud Run instances.
+- `GOOGLE_ADS_MCP_STORAGE_TYPE`: (Recommended for production) Storage backend to persist OAuth tokens across instances. Set it to `firestore` to use Firestore through Application Default Credentials, which needs no VPC connector, or to `redis` along with `GOOGLE_ADS_MCP_STORAGE_REDIS_URL`.
+
+  Using `firestore` requires three things: build the image with the extra
+  installed (change the Dockerfile to `uv pip install --system .[firestore]`),
+  create a Firestore database in the project, since one is not provisioned
+  automatically, and grant the Cloud Run service account `roles/datastore.user`.
+  Note that entries are not expired automatically: the store filters expired
+  entries on read but never deletes them, and `expires_at` is written as a
+  string, so a Firestore TTL policy cannot collect them either. Plan on a
+  periodic cleanup job for long-running deployments. Redis expires entries on
+  its own.
 - `FASTMCP_HOST`: Set this to `0.0.0.0` to allow FastMCP to accept connections from all IP addresses.
+- `GOOGLE_ADS_LOGIN_CUSTOMER_ID`: Required if your access to the customer account is through a manager account. Set it to the customer ID of the manager account. See [Login Customer Id](#login-customer-id) above for details.
 
 ```shell
 gcloud run deploy google-ads-mcp \
@@ -303,12 +438,12 @@ gcloud run deploy google-ads-mcp \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars="GOOGLE_PROJECT_ID=YOUR_PROJECT_ID,GOOGLE_ADS_DEVELOPER_TOKEN=YOUR_DEVELOPER_TOKEN,GOOGLE_ADS_MCP_OAUTH_CLIENT_ID=YOUR_CLIENT_ID,GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET=YOUR_CLIENT_SECRET,GOOGLE_ADS_MCP_BASE_URL=YOUR_BASE_URL,FASTMCP_HOST=0.0.0.0"
+  --set-env-vars="GOOGLE_PROJECT_ID=YOUR_PROJECT_ID,GOOGLE_ADS_DEVELOPER_TOKEN=YOUR_DEVELOPER_TOKEN,GOOGLE_ADS_MCP_OAUTH_CLIENT_ID=YOUR_CLIENT_ID,GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET=YOUR_CLIENT_SECRET,GOOGLE_ADS_MCP_BASE_URL=YOUR_BASE_URL,GOOGLE_ADS_MCP_JWT_SIGNING_KEY=YOUR_JWT_SIGNING_KEY,GOOGLE_ADS_MCP_STORAGE_TYPE=firestore,FASTMCP_HOST=0.0.0.0"
 ```
 
 ### Step 3: Configure MCP Client
 
-Once deployed, update your MCP client configuration (e.g., `~/.gemini/settings.json`) to use the Cloud Run URL.
+Once deployed, update your MCP client configuration (refer to the docs at [https://antigravity.google/docs/mcp](https://antigravity.google/docs/mcp)) to use the Cloud Run URL.
 
 ```json
 {
@@ -359,23 +494,8 @@ be simpler.
 How many active campaigns do I have for customer id 1234567890
 ```
 
-## Skills
-
-This repository also provides [Agent Skills](https://agentskills.io/), which are specialized workflows and instructions that give AI agents specific expertise.
-
-### Skills available
-
-- `account-performance-diagnostics`: Diagnose account performance issues such as conversion loss, low lead flow, and lost opportunities. Located in `ads_mcp/skills/account-performance-diagnostics`.
-
-### How to install skills
-
-To use these skills, you need to point your skills-compatible AI agent to the skill directory.
-
-For example, if you are using [Gemini CLI](https://github.com/google-gemini/gemini-cli), you can install the skill by copying the folder to your skills directory or referencing it. See the [Gemini CLI Skills documentation](https://geminicli.com/docs/cli/skills/) for detailed instructions.
-
-While that guide is specific to Gemini CLI, Agent Skills are an open standard and can be loaded by any compatible agent or LLM tool that supports the format (e.g., Claude Code, Cursor).
-
-
 ## Contributing
 
 Contributions welcome! See the [Contributing Guide](CONTRIBUTING.md).
+Project maintainers can find the Trusted Publishing and release procedure in
+the [release guide](docs/releasing.md).

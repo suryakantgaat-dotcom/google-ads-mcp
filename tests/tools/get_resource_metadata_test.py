@@ -151,6 +151,27 @@ class TestGetResourceMetadata(unittest.TestCase):
             str(cm.exception),
         )
 
+    @patch("ads_mcp.utils.get_googleads_service")
+    @patch("ads_mcp.utils.get_googleads_type")
+    def test_get_resource_metadata_with_login_customer_id(
+        self, mock_get_type, mock_get_service
+    ):
+        """Tests that get_resource_metadata forwards login_customer_id to get_googleads_service."""
+        mock_service = MagicMock()
+        mock_get_service.return_value = mock_service
+        mock_get_type.return_value = MagicMock()
+        mock_service.search_google_ads_fields.side_effect = [[], []]
+
+        get_resource_metadata.get_resource_metadata(
+            "campaign", login_customer_id="999-888-7777"
+        )
+
+        mock_get_service.assert_called_once_with(
+            "GoogleAdsFieldService",
+            login_customer_id="999-888-7777",
+            account_name=None,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

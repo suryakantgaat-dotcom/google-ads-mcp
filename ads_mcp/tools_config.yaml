@@ -1,0 +1,13 @@
+# tools_config.yaml
+#
+# Tools configuration for the Google Ads MCP server.
+# Modify this file to enable/disable tool namespaces or set custom prefixes.
+#
+# An empty string enables the namespace without a prefix, so the tools keep
+# their unprefixed names (search, list_accessible_customers,
+# get_resource_metadata) that existing clients call.
+
+namespaces:
+  customers: ""
+  search: ""
+  metadata: ""
