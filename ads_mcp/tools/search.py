@@ -47,7 +47,7 @@ def search(
         limit: The maximum number of rows to return
         login_customer_id: Optional manager customer ID to use as the login-customer-id header.
         account_name: Optional name of the account to use from
-            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'qura'). Its credentials,
+            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,
             developer token and login customer ID are used for the call.
 
     """

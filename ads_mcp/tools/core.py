@@ -36,7 +36,7 @@ def list_accessible_customers(account_name: str | None = None) -> List[str]:
 
     Args:
         account_name: Optional name of the account to use from
-            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'qura'). Its credentials,
+            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,
             developer token and login customer ID are used for the call.
 
     Returns:

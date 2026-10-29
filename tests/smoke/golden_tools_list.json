@@ -23,7 +23,7 @@
               }
             ],
             "default": null,
-            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'qura'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
           },
           "login_customer_id": {
             "anyOf": [
@@ -80,7 +80,7 @@
               }
             ],
             "default": null,
-            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'qura'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
           }
         },
         "type": "object"
@@ -126,7 +126,7 @@
               }
             ],
             "default": null,
-            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'qura'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
           },
           "conditions": {
             "default": [],

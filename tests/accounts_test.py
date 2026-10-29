@@ -26,10 +26,10 @@ from ads_mcp import utils
 
 _ACCOUNTS = [
     {
-        "name": "qura",
-        "developer_token": "dev-qura",
+        "name": "client_a",
+        "developer_token": "dev-client-a",
         "login_customer_id": "111-222-3333",
-        "refresh_token": "rt-qura",
+        "refresh_token": "rt-client-a",
         "client_id": "cid",
         "client_secret": "secret",
     },
@@ -54,19 +54,19 @@ class TestAccountClients(unittest.TestCase):
     def test_account_uses_its_own_refresh_token_and_settings(self):
         with _env(GOOGLE_ADS_LOGIN_CUSTOMER_ID="999"):
             with patch("ads_mcp.utils.GoogleAdsClient") as mock_client:
-                utils._get_googleads_client(account_name="qura")
+                utils._get_googleads_client(account_name="client_a")
                 _, kwargs = mock_client.call_args
         creds = kwargs["credentials"]
         self.assertIsInstance(creds, Credentials)
-        self.assertEqual(creds.refresh_token, "rt-qura")
-        self.assertEqual(kwargs["developer_token"], "dev-qura")
+        self.assertEqual(creds.refresh_token, "rt-client-a")
+        self.assertEqual(kwargs["developer_token"], "dev-client-a")
         self.assertEqual(kwargs["login_customer_id"], "1112223333")
 
     def test_explicit_login_customer_id_overrides_account(self):
         with _env():
             with patch("ads_mcp.utils.GoogleAdsClient") as mock_client:
                 utils._get_googleads_client(
-                    login_customer_id="444-555-6666", account_name="qura"
+                    login_customer_id="444-555-6666", account_name="client_a"
                 )
                 _, kwargs = mock_client.call_args
         self.assertEqual(kwargs["login_customer_id"], "4445556666")
@@ -75,7 +75,7 @@ class TestAccountClients(unittest.TestCase):
         with _env():
             with self.assertRaises(ToolError) as cm:
                 utils._get_googleads_client(account_name="missing")
-        self.assertIn("qura", str(cm.exception))
+        self.assertIn("client_a", str(cm.exception))
 
     def test_account_without_credentials_does_not_fall_back(self):
         with _env():
