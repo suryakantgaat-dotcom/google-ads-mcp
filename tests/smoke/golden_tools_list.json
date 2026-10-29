@@ -13,6 +13,33 @@
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional manager customer ID to use as the login-customer-id header."
+          },
           "resource_name": {
             "description": "The name of the Google Ads resource (e.g., 'campaign', 'ad_group').",
             "type": "string"
@@ -27,7 +54,8 @@
       "outputSchema": {
         "additionalProperties": true,
         "type": "object"
-      }
+      },
+      "title": "Get Resource Metadata"
     },
     {
       "_meta": {
@@ -38,10 +66,23 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "description": "Returns ids of customers directly accessible by the user authenticating the call.\n\nUse this tool first to discover available customer IDs if the user hasn't\nprovided one. Most other tools require a valid customer ID as input.\n\nReturns:\n    List[str]: A list of customer IDs.",
+      "description": "Returns ids of customers directly accessible by the user authenticating the call.\n\nUse this tool first to discover available customer IDs if the user hasn't\nprovided one. Most other tools require a valid customer ID as input.",
       "inputSchema": {
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+          }
+        },
         "type": "object"
       },
       "name": "list_accessible_customers",
@@ -59,7 +100,8 @@
         ],
         "type": "object",
         "x-fastmcp-wrap-result": true
-      }
+      },
+      "title": "List Accessible Customers"
     },
     {
       "_meta": {
@@ -74,8 +116,20 @@
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
-          "conditions": {
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "default": null,
+            "description": "Optional name of the account to use from\nGOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,\ndeveloper token and login customer ID are used for the call."
+          },
+          "conditions": {
+            "default": [],
             "description": "List of conditions to filter the data, combined using AND clauses",
             "items": {
               "type": "string"
@@ -83,8 +137,15 @@
             "type": "array"
           },
           "customer_id": {
-            "description": "The id of the customer",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "The id of the customer"
           },
           "fields": {
             "description": "The fields to fetch",
@@ -94,12 +155,34 @@
             "type": "array"
           },
           "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "default": null,
-            "description": "The maximum number of rows to return",
-            "type": "integer"
+            "description": "The maximum number of rows to return"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional manager customer ID to use as the login-customer-id header."
           },
           "orderings": {
-            "default": null,
+            "default": [],
             "description": "How the data is ordered",
             "items": {
               "type": "string"
@@ -134,7 +217,8 @@
         ],
         "type": "object",
         "x-fastmcp-wrap-result": true
-      }
+      },
+      "title": "Search"
     }
   ]
 }

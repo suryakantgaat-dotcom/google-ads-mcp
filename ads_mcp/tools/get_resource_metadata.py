@@ -15,13 +15,19 @@
 """Tools for fetching metadata for Google Ads resources."""
 
 from typing import Any, Dict
-from ads_mcp.coordinator import mcp
+from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 import ads_mcp.utils as utils
 
+metadata_mcp = FastMCP("metadata")
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
-def get_resource_metadata(resource_name: str) -> Dict[str, Any]:
+
+@metadata_mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+def get_resource_metadata(
+    resource_name: str,
+    login_customer_id: str | int | None = None,
+    account_name: str | None = None,
+) -> Dict[str, Any]:
     """Retrieves the selectable, filterable, and sortable fields for a specific Google Ads resource,
     including compatible metrics and segments.
 
@@ -37,9 +43,19 @@ def get_resource_metadata(resource_name: str) -> Dict[str, Any]:
 
     Args:
         resource_name: The name of the Google Ads resource (e.g., 'campaign', 'ad_group').
+        login_customer_id: Optional manager customer ID to use as the login-customer-id header.
+        account_name: Optional name of the account to use from
+            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,
+            developer token and login customer ID are used for the call.
     """
-    ga_service = utils.get_googleads_service("GoogleAdsFieldService")
-    request = utils.get_googleads_type("SearchGoogleAdsFieldsRequest")
+    ga_service = utils.get_googleads_service(
+        "GoogleAdsFieldService",
+        login_customer_id=login_customer_id,
+        account_name=account_name,
+    )
+    request = utils.get_googleads_type(
+        "SearchGoogleAdsFieldsRequest", account_name=account_name
+    )
 
     selectable = set()
     filterable = set()

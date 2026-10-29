@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,31 +15,36 @@
 """Tools for exposing simple, core API methods to the MCP server."""
 
 from typing import List
-from ads_mcp.coordinator import mcp
+from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 import ads_mcp.utils as utils
 
-from google.ads.googleads.v24.services.types.customer_service import (
+from google.ads.googleads.v25.services.types.customer_service import (
     ListAccessibleCustomersResponse,
 )
 
-@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
-def list_accessible_customers(account_name: str = None) -> List[str]:
+customers_mcp = FastMCP("customers")
+
+
+@customers_mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+def list_accessible_customers(account_name: str | None = None) -> List[str]:
     """Returns ids of customers directly accessible by the user authenticating the call.
 
     Use this tool first to discover available customer IDs if the user hasn't
     provided one. Most other tools require a valid customer ID as input.
 
     Args:
-        account_name: Optional name of the account config to use from
-            GOOGLE_ADS_ACCOUNTS_CONFIG. If omitted, uses the default
-            GOOGLE_ADS_DEVELOPER_TOKEN / GOOGLE_ADS_LOGIN_CUSTOMER_ID env vars.
+        account_name: Optional name of the account to use from
+            GOOGLE_ADS_ACCOUNTS_CONFIG (for example 'client_a'). Its credentials,
+            developer token and login customer ID are used for the call.
 
     Returns:
         List[str]: A list of customer IDs.
     """
-    ga_service = utils.get_googleads_service("CustomerService", account_name)
+    ga_service = utils.get_googleads_service(
+        "CustomerService", account_name=account_name
+    )
     accessible_customers: ListAccessibleCustomersResponse = (
         ga_service.list_accessible_customers()
     )
