@@ -1,6 +1,6 @@
 ---
 name: account-performance-diagnostics
-description: Diagnose account performance issues such as conversion loss, low lead flow, and lost opportunities due to ad rank, bids, or budgets. Use this skill to guide queries for troubleshooting performance drops.
+description: Diagnose account performance issues such as conversion loss, low lead flow, and lost opportunities due to ad rank, bids, or budgets. Use when the user reports a drop in conversions or leads, rising CPA, lost impression share, limited budgets, or asks why a Google Ads account or campaign is underperforming.
 ---
 
 # Account Performance Diagnostics Skill
