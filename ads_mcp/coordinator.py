@@ -22,6 +22,7 @@ of the server.
 import os
 from typing import Any
 from fastmcp import FastMCP
+from fastmcp_tasks import TasksExtension
 from fastmcp.server.auth.providers.google import GoogleProvider
 from mcp import types as mcp_types
 from mcp.server.subscriptions import InMemorySubscriptionBus, ListenHandler
@@ -54,6 +55,8 @@ if _CLIENT_ID and _CLIENT_SECRET:
     mcp = FastMCP("Google Ads Server", auth=auth)
 else:
     mcp = FastMCP("Google Ads Server")
+
+mcp.add_extension(TasksExtension())
 
 
 def ensure_subscriptions_listen(server: FastMCP) -> bool:
