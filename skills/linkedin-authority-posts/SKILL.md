@@ -15,11 +15,13 @@ Why intake comes first: the research behind this skill found that the best-suppo
 2. **Permission gate.** If the post uses client or employer results, run `references/client-results-checklist.md` before drafting. If permission is unconfirmed, draft with anonymised or indexed numbers, or switch to the user's own or test accounts.
 3. **Pick a post type** with the user, from `references/post-types.md` (case study, teardown, experiment write-up, contrarian take, framework). Use that file's skeleton and required inputs.
 4. **Draft.** Apply the defaults in `references/rules-and-defaults.md` and the voice notes in `references/voice-samples.md`. If the voice file is empty, draft in plain neutral prose, say the voice is not calibrated, and ask for 3 to 10 samples of the user's own writing or posts they admire.
-5. **Anti-slop check.** Run `references/anti-slop-checklist.md` on the draft. It works on clusters of tells, not single words. Fix by adding the missing specific, not by swapping words.
-6. **Deliver** in this shape:
+5. **Companion passes.** Run the `content-writing` skill's copywriting, copy-edit and humanise passes on the draft, in that order, as set out in `references/companion-skills.md`. They improve hook, flow and voice. They must not add facts: any detail, anecdote or number comes from the user's intake or is asked for.
+6. **Final gate.** Run `references/anti-slop-checklist.md` on the result. It works on clusters of tells, not single words. Fix by adding the missing specific, not by swapping words. Then re-trace every number, date, name and quote to the intake, since the companion passes edit text.
+7. **Deliver** in this shape:
    - the post (plus one alternate hook)
    - **Claims to verify**: every number, date, causal claim and named entity, each marked with where in the user's input it came from
    - **Defaults being tested**: which of length, format, hook, CTA, time or cadence this post uses, and a pre-filled row for `references/measurement-log.md`
+   - one line on which companion passes ran and whether any changed a fact
 
 ## Required inputs
 
