@@ -1,6 +1,6 @@
 # Ideas from creators
 
-An idea pool, not a rulebook. Everything here is creator-stated, vendor-stated or from search summaries, so it sits at evidence level C or below. Use it to generate options, then test them with `measurement-log.md`. Copy structures, never wording. Source notes: `research_notes/LinkedIn creator examples/`.
+An idea pool, not a rulebook. Everything here is creator-stated, vendor-stated or from search summaries, so it sits at evidence level C or below. Use it to generate options, then test them with `measurement-log.md`. Copy structures, never wording. Source notes are in the source repo under `research_notes/LinkedIn creator examples/` (not bundled in an installed copy).
 
 ## What was and was not verified
 

@@ -1,6 +1,6 @@
 # Rules and defaults, with evidence levels
 
-Source: `reports/LinkedIn thought leadership best practices.md` (revised 2026-11-20) and the `verify_*.md` notes in `research_notes/`.
+Source: the research report "LinkedIn thought leadership best practices" (revised 2026-11-20) and its `verify_*.md` notes, kept in the source repo under `reports/` and `research_notes/` (not bundled in an installed copy).
 
 Levels: **A** stated by LinkedIn or in a paper, primary page read. **B** large third-party dataset, usually vendor-run. **C** practitioner opinion, small test, or loose support. **I** inference. **[Unverified]** no traceable source.
 

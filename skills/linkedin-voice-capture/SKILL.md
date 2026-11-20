@@ -1,11 +1,11 @@
 ---
 name: linkedin-voice-capture
-description: Builds the user's writing-voice profile for LinkedIn from their own words: it reads how they write to the AI and anything they paste, sets short raw-writing exercises on specific topics, runs a brief interview, and offers ways to put their own voice into each draft. Use this skill whenever the user says "capture my voice", "make posts sound like me", "learn my writing style", "I have no past posts", or when the linkedin-authority-posts skill finds an empty or thin references/voice-samples.md. Also use it to refresh the profile after the user has published a few posts.
+description: "Builds the user's writing-voice profile for LinkedIn from their own words: it reads how they write to the AI and anything they paste, sets short raw-writing exercises on specific topics, runs a brief interview, and offers ways to put their own voice into each draft. Use this skill whenever the user says \"capture my voice\", \"make posts sound like me\", \"learn my writing style\", \"I have no past posts\", or when the linkedin-authority-posts skill finds an empty or thin references/voice-samples.md. Also use it to refresh the profile after the user has published a few posts."
 ---
 
 # LinkedIn voice capture
 
-Collect evidence of how the user actually writes, then record it where the drafting skill reads it: `skills/linkedin-authority-posts/references/voice-samples.md`. This skill never writes samples for the user and never invents a quote.
+Collect evidence of how the user actually writes, then record it where the drafting skill reads it: the `references/voice-samples.md` file of the `linkedin-authority-posts` skill (in the source repo: `skills/linkedin-authority-posts/references/voice-samples.md`). This skill never writes samples for the user and never invents a quote.
 
 Why raw samples: credible-writer sources recommend building a voice guide from the author's own writing (5 to 10 pieces) with explicit banned phrases (level C, from search summaries, not re-read). No source tested whether this lowers reader suspicion of AI authorship, so describe the profile as a drafting aid, not a guarantee.
 
@@ -17,7 +17,7 @@ Why raw samples: credible-writer sources recommend building a voice guide from t
 4. **Interview.** Ask the 8 questions in `references/writing-prompts.md` in small batches. Answers in the user's own phrasing go into the profile verbatim.
 5. **Ways to add voice.** Offer the options below and ask which the user will use per post. Record the choice.
 6. **Draft the profile** (format below). Show it to the user and change anything they dispute before saving. The user's correction outranks your observation.
-7. **Save** to `skills/linkedin-authority-posts/references/voice-samples.md`: notes in the user's words where possible, samples verbatim, date, sample count, confidence.
+7. **Save** to the `linkedin-authority-posts` skill's `references/voice-samples.md`: notes in the user's words where possible, samples verbatim, date, sample count, confidence. If that file cannot be written (an installed skill folder may be read-only), output the finished profile in a code block and tell the user to keep it in a file or project note and paste it into the chat when drafting.
 8. **Refresh.** After the user has published 3 or more posts, ask for them (as posted, plus the drafts if available). Compare drafts with what the user changed and update the profile with the differences.
 
 ## Ways to add voice to a draft
